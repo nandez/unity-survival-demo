@@ -797,7 +797,11 @@ PlayerSettings:
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 0
-  scriptingDefineSymbols: {}
+  scriptingDefineSymbols:
+    Android: CROSS_PLATFORM_INPUT;MOBILE_INPUT
+    Standalone: STARTER_ASSETS_PACKAGES_CHECKED;CROSS_PLATFORM_INPUT
+    Windows Store Apps: MOBILE_INPUT
+    iPhone: CROSS_PLATFORM_INPUT;MOBILE_INPUT
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend: {}
@@ -893,11 +897,11 @@ PlayerSettings:
     m_VersionName: 
   apiCompatibilityLevel: 6
   activeInputHandler: 0
-  cloudProjectId: aaf1375a-186d-4cc8-85d1-b06df7a3c6ee
+  cloudProjectId: ce3eb410-6097-4faa-8d5a-f54c78af287b
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
   projectName: SurvivalDemo
-  organizationId: bios_2do_prog
+  organizationId: nandum
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   playerDataPath: 

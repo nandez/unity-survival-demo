@@ -7,7 +7,13 @@ TagManager:
   - CinemachineTarget
   - Fire
   - Tree
-  - Home
+  - StoneSource
+  - MetalSource
+  - WoodSource
+  - WoodItem
+  - StoneItem
+  - MetalItem
+  - BuildZone
   layers:
   - Default
   - TransparentFX
@@ -16,9 +22,9 @@ TagManager:
   - Water
   - UI
   - Ground
-  - 
-  - 
-  - 
+  - Actionable
+  - Player
+  - BuildZone
   - 
   - 
   - 

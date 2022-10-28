@@ -19,17 +19,19 @@ public class UIController : MonoBehaviour
             var display = Instantiate(resourceUIPrefab, topBar);
             display.name = $"ui_{resource.Key}";
 
-            Debug.Log($"Sprites/{resource.Key}_icon");
             display.transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>($"Sprites/{resource.Key}_icon");
 
             // Actualizamos el valor del diccionario en la clave que matchee el recurso actual (ej: "wood")
             resourceTexts[resource.Key] = display.transform.Find("Text").GetComponent<Text>();
             SetResourceText(resource.Key, resource.Value.Amount, resource.Value.MaxAmount);
-
-
         }
     }
 
+
+    private void Update()
+    {
+        UpdateResourceTexts();
+    }
 
     private void SetResourceText(string resourceKey, int value, int maxValue)
     {

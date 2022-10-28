@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class GameManager : MonoBehaviour
 {
@@ -17,20 +18,19 @@ public class GameManager : MonoBehaviour
         { "metal", new GameResource("Metal", 0, 5 ) },
     };
 
+    private static NavMeshSurface navMeshSurface;
+
     private void Awake()
     {
         if (Instance == null)
             Instance = this;
+
+        navMeshSurface = GameObject.Find("Ground").GetComponent<NavMeshSurface>();
+        UpdateNavMesh();
     }
 
-    void Start()
+    public void UpdateNavMesh()
     {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
+        navMeshSurface.UpdateNavMesh(navMeshSurface.navMeshData);
     }
 }

@@ -17,4 +17,9 @@ public class GameResource
         if (Amount < 0)
             Amount = 0;
     }
+
+    public bool CanAdd()
+    {
+        return Amount < MaxAmount;
+    }
 }

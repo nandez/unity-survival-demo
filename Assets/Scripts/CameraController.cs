@@ -6,10 +6,21 @@ using UnityEngine;
 [RequireComponent(typeof(Camera))]
 public class CameraController : MonoBehaviour
 {
-    [SerializeField] private float speed = 60f;
+    [SerializeField] private float speed = 10f;
+    [SerializeField] private float marginSafeBuffer = 1f;
+
+
+    [Header("Map Settings")]
+    [SerializeField] private float minX;
+    [SerializeField] private float maxX;
+    [SerializeField] private float minZ;
+    [SerializeField] private float maxZ;
 
     private Camera cam;
-    private Vector3 cameraForward;
+    private Vector3 camForward;
+    private Vector3 camOffset;
+    private Vector3 camHalfViewZone;
+
 
     // TODO: idealmente la dirección debería ser un enumerado para unificar los valores;
     // de momento utilizamos un entero para simplificar, donde asumimos los siguientes valores:
@@ -17,25 +28,39 @@ public class CameraController : MonoBehaviour
     private int moveDirection;
     private Coroutine setDirectionCoroutine;
 
+
     void Awake()
     {
         cam = GetComponent<Camera>();
+    }
 
+    void Start()
+    {
         // Como la camara tiene rotación y se encuentra mirando hacia el terreno, tenemos que
         // calcular cual sería el vector para su "forward" dado que si utilizamos el local
         // eventualmente la camara atravesaría el terreno.
-        cameraForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+        camForward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+
+        // Calculamos el offset entre el la camara y el punto en el mundo hacia dodne está
+        // apuntando la camara para limitar luego el movimiento y evitar que se siga desplazando
+        // fuera de los límites del terreno.
+        (var minWorldPoint, var maxWorldPoint) = Utilities.GetWorldSize();
+        camOffset = transform.position - (maxWorldPoint + minWorldPoint) / 2f;
+        camHalfViewZone = (maxWorldPoint - minWorldPoint) / 2f + Vector3.one * marginSafeBuffer;
     }
 
     void Update()
     {
-        if (moveDirection == 1)
-            transform.Translate(cameraForward * speed * Time.deltaTime, Space.World);
-        else if (moveDirection == 2)
-            transform.Translate(-cameraForward * speed * Time.deltaTime, Space.World);
-        else if (moveDirection == 3)
+        if (moveDirection == 1 && transform.position.z - camOffset.z + camHalfViewZone.z <= maxZ)
+            transform.Translate(camForward * speed * Time.deltaTime, Space.World);
+
+        else if (moveDirection == 2 && transform.position.z - camOffset.z - camHalfViewZone.z >= minZ)
+            transform.Translate(-camForward * speed * Time.deltaTime, Space.World);
+
+        else if (moveDirection == 3 && transform.position.x + camHalfViewZone.x <= maxX)
             transform.Translate(transform.right * speed * Time.deltaTime);
-        else if (moveDirection == 4)
+
+        else if (moveDirection == 4 && transform.position.x - camHalfViewZone.x >= minX)
             transform.Translate(-transform.right * speed * Time.deltaTime);
     }
 
@@ -52,6 +77,8 @@ public class CameraController : MonoBehaviour
         // Al quitar el mouse del borde, cancelamos la corutina y reseteamos la dirección a 0.
         StopCoroutine(setDirectionCoroutine);
         moveDirection = 0;
+
+        Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
     }
 
     private IEnumerator SetDirection(int direction)

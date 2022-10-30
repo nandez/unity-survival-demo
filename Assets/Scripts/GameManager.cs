@@ -20,6 +20,9 @@ public class GameManager : MonoBehaviour
 
     private static NavMeshSurface navMeshSurface;
 
+
+    public Collider mapWrapperCollider;
+
     private void Awake()
     {
         if (Instance == null)

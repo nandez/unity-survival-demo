@@ -2,46 +2,57 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Events;
+
 public class UIController : MonoBehaviour
 {
-    [SerializeField] private Transform topBar;
-    [SerializeField] private GameObject resourceUIPrefab;
+    [Header("Timer Settings")]
+    [SerializeField] private Text timeText;
+    [SerializeField] private float timeRemaining = 10;
 
-    private Dictionary<string, Text> resourceTexts = new Dictionary<string, Text>();
+    [Header("Events")]
+    [Tooltip("Evento que se dispara cuando el timer expira.")]
+    public UnityEvent OnTimerExpired;
+
+    private bool timerIsRunning = false;
 
     void Start()
     {
-        // Iteramos sobre cada recurso para crear los elementos de UI
-        // que van a indicar la cantidad actual de cada uno.
-        foreach (var resource in GameManager.Resources)
-        {
-            // Creamos un nuevo gameobject y asignamos nombre e ícono del recurso actual..
-            var display = Instantiate(resourceUIPrefab, topBar);
-            display.name = $"ui_{resource.Key}";
-
-            display.transform.Find("Icon").GetComponent<Image>().sprite = Resources.Load<Sprite>($"Sprites/{resource.Key}_icon");
-
-            // Actualizamos el valor del diccionario en la clave que matchee el recurso actual (ej: "wood")
-            resourceTexts[resource.Key] = display.transform.Find("Text").GetComponent<Text>();
-            SetResourceText(resource.Key, resource.Value.Amount, resource.Value.MaxAmount);
-        }
+        timerIsRunning = true;
     }
 
 
     private void Update()
     {
-        UpdateResourceTexts();
+        if (timerIsRunning)
+        {
+            if (timeRemaining > 0)
+            {
+                timeRemaining -= Time.deltaTime;
+                DisplayTime(timeRemaining);
+            }
+            else
+            {
+                timeRemaining = 0;
+                timerIsRunning = false;
+                OnTimerExpired?.Invoke();
+            }
+        }
     }
 
-    private void SetResourceText(string resourceKey, int value, int maxValue)
+    public void OnUpdateGameResourceEventHandler(GameResource resource)
     {
-        if (resourceTexts.ContainsKey(resourceKey))
-            resourceTexts[resourceKey].text = $"{value} / {maxValue}";
+        if(resource == null)
+            return;
+
+        resource.resourceUiText.text = $"{resource.GetCurrentAmount()} / {resource.GetMaxAmount()}";
     }
 
-    public void UpdateResourceTexts()
+    private void DisplayTime(float timeToDisplay)
     {
-        foreach (var resource in GameManager.Resources)
-            SetResourceText(resource.Key, resource.Value.Amount, resource.Value.MaxAmount);
+        timeToDisplay += 1;
+        float minutes = Mathf.FloorToInt(timeToDisplay / 60);
+        float seconds = Mathf.FloorToInt(timeToDisplay % 60);
+        timeText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 }

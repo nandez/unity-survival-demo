@@ -4,16 +4,10 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - CinemachineTarget
-  - Fire
-  - Tree
-  - StoneSource
-  - MetalSource
-  - WoodSource
-  - WoodItem
-  - StoneItem
-  - MetalItem
-  - BuildZone
+  - Resource_Wood
+  - Resource_Ore
+  - Resource_Stone
+  - Actionable_Workbench
   layers:
   - Default
   - TransparentFX

@@ -5,55 +5,30 @@ using UnityEngine;
 
 public class MinimapController : MonoBehaviour
 {
-    [SerializeField] private Material indicatorMat;
-    [SerializeField] private float lineWidth;
-    private Camera minimapCam;
+    [SerializeField] private Transform player;
 
-    void Awake()
+    private float initialShadowDistance;
+
+    private void LateUpdate()
     {
-        minimapCam = GetComponent<Camera>();
+        // Usamos la posición del jugador para establecer la nueva posición
+        // de la cámara, el valor actual de "y" representa el zoom del minimap.
+        var newCameraPosition = player.position;
+        newCameraPosition.y = transform.position.y;
+        transform.position = newCameraPosition;
     }
 
-    void OnPostRender()
+    private void OnPreRender()
     {
-        (Vector3 minWorldPoint, Vector3 maxWorldPoint) = Utilities.GetWorldSize();
-        Vector3 minViewportPoint = minimapCam.WorldToViewportPoint(minWorldPoint);
-        Vector3 maxViewportPoint = minimapCam.WorldToViewportPoint(maxWorldPoint);
-        float minX = minViewportPoint.x;
-        float minY = minViewportPoint.y;
-        float maxX = maxViewportPoint.x;
-        float maxY = maxViewportPoint.y;
+        // Guardamos la distancia de sombras y la reseteamos a 0
+        // para evitar que se visulicen las sombras en el minimapa.
+        initialShadowDistance = QualitySettings.shadowDistance;
+        QualitySettings.shadowDistance = 0;
+    }
 
-        GL.PushMatrix();
-        {
-            indicatorMat.SetPass(0);
-            GL.LoadOrtho();
-
-            GL.Begin(GL.QUADS);
-            GL.Color(new Color(1f, 1f, 0.85f));
-            {
-                GL.Vertex(new Vector3(minX, minY + lineWidth, 0));
-                GL.Vertex(new Vector3(minX, minY - lineWidth, 0));
-                GL.Vertex(new Vector3(maxX, minY - lineWidth, 0));
-                GL.Vertex(new Vector3(maxX, minY + lineWidth, 0));
-
-                GL.Vertex(new Vector3(minX + lineWidth, minY, 0));
-                GL.Vertex(new Vector3(minX - lineWidth, minY, 0));
-                GL.Vertex(new Vector3(minX - lineWidth, maxY, 0));
-                GL.Vertex(new Vector3(minX + lineWidth, maxY, 0));
-
-                GL.Vertex(new Vector3(minX, maxY + lineWidth, 0));
-                GL.Vertex(new Vector3(minX, maxY - lineWidth, 0));
-                GL.Vertex(new Vector3(maxX, maxY - lineWidth, 0));
-                GL.Vertex(new Vector3(maxX, maxY + lineWidth, 0));
-
-                GL.Vertex(new Vector3(maxX + lineWidth, minY, 0));
-                GL.Vertex(new Vector3(maxX - lineWidth, minY, 0));
-                GL.Vertex(new Vector3(maxX - lineWidth, maxY, 0));
-                GL.Vertex(new Vector3(maxX + lineWidth, maxY, 0));
-            }
-            GL.End();
-        }
-        GL.PopMatrix();
+    private void OnPostRender()
+    {
+        // En el post render, restauramos el valor inicial.
+        QualitySettings.shadowDistance = initialShadowDistance;
     }
 }

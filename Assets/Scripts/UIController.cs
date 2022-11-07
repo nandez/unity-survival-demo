@@ -6,6 +6,9 @@ using UnityEngine.Events;
 
 public class UIController : MonoBehaviour
 {
+    [Header("UI References")]
+    [SerializeField] private List<GameObject> healthIcons;
+
     [Header("Timer Settings")]
     [SerializeField] private Text timeText;
     [SerializeField] private float timeRemaining = 10;
@@ -42,10 +45,17 @@ public class UIController : MonoBehaviour
 
     public void OnUpdateGameResourceEventHandler(GameResource resource)
     {
-        if(resource == null)
+        if (resource == null)
             return;
 
         resource.resourceUiText.text = $"{resource.GetCurrentAmount()} / {resource.GetMaxAmount()}";
+    }
+
+    public void OnPlayerDeathHandler(int remainingLives)
+    {
+        // Desactivamos los iconos de vida.
+        for (int i = healthIcons.Count; i > remainingLives; i--)
+            healthIcons[i - 1].SetActive(false);
     }
 
     private void DisplayTime(float timeToDisplay)

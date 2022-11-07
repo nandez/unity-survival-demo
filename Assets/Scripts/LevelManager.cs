@@ -1,4 +1,4 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -20,9 +20,18 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private List<GameObject> fences;
     [SerializeField] private List<GameObject> pathways;
 
+    [Header("Enemy Settings")]
+    [SerializeField] private List<GameObject> enemyPrefabs;
+    [SerializeField] private List<GameObject> enemySpawnAreas;
+    [SerializeField] private float enemySpanDelay = 8f;
+    [SerializeField] private int maxEnemiesOnLevel = 10;
+
     [Header("Events")]
     [Tooltip("Evento que se dispara cuando se actualizan los recursos del jugador.")]
     public UnityEvent<GameResource> OnGameResourcesUpdated;
+
+    private GameState gameState = GameState.PAUSED;
+    private List<GameObject> enemies = new List<GameObject>();
 
     private void Start()
     {
@@ -32,6 +41,9 @@ public class LevelManager : MonoBehaviour
         OnGameResourcesUpdated?.Invoke(wood);
         OnGameResourcesUpdated?.Invoke(stone);
         OnGameResourcesUpdated?.Invoke(ore);
+
+        gameState = GameState.RUNNING;
+        StartCoroutine(nameof(SpawnEnemies));
     }
 
     private void UpdateNavMesh()
@@ -91,9 +103,41 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-
     public void OnTimerExpiredHandler()
     {
         Debug.Log("TIMER EXPIRED!");
+    }
+
+    public void OnPlayerDeathHandler(int remainingLives)
+    {
+        if (remainingLives > 0)
+        {
+            // TODO: eliminar los enemigos
+        }
+    }
+
+    private IEnumerator SpawnEnemies()
+    {
+        while (true)
+        {
+            yield return new WaitForSeconds(enemySpanDelay);
+
+            if (enemies.Count < maxEnemiesOnLevel)
+            {
+                // Obtenemos un área de spawn aleatoria
+                var spawnArea = enemySpawnAreas[Random.Range(0, enemySpawnAreas.Count)].GetComponent<Collider>();
+
+                // Obtenemos un enemigo aleatorio
+                var enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Count)];
+
+                // Generamos coordenadas aleatorias dentro del area de spawn
+                var x = Random.Range(spawnArea.bounds.min.x, spawnArea.bounds.max.x);
+                var z = Random.Range(spawnArea.bounds.min.z, spawnArea.bounds.max.z);
+
+                // Instanciamos el enemigo en la posición del área de spawn
+                var enemy = Instantiate(enemyPrefab, new Vector3(x, 0.26f, z), Quaternion.identity);
+                enemies.Add(enemy);
+            }
+        }
     }
 }

@@ -8,6 +8,9 @@ TagManager:
   - Resource_Ore
   - Resource_Stone
   - Actionable_Workbench
+  - Actionable_Enemy
+  - Projectile_Rock
+  - Projectile_Spear
   layers:
   - Default
   - TransparentFX
@@ -18,8 +21,8 @@ TagManager:
   - Ground
   - Actionable
   - Player
-  - BuildZone
-  - 
+  - Enemy
+  - Projectiles
   - 
   - 
   - 

@@ -20,15 +20,17 @@ public class PlayerController : MonoBehaviour
     [Header("Events")]
     [Tooltip("Evento que se dispara cuando el jugador posiciona el mouse sobre un item accionable.")]
     public UnityEvent<string> OnMouseOverActionableItem;
-
+    [Tooltip("Evento que se dispara cuando el jugador pierde una vida.")]
+    public UnityEvent<int> OnPlayerDeath;
 
     public GameObject CurrentItem { get; private set; }
 
     private LevelManager levelMgr;
     private NavMeshAgent navAgent;
     private float initialSpeed;
+    private int playerLives = 3;
 
-    void Start()
+    private void Start()
     {
         // Buscamos las referencias necesarias..
         levelMgr = FindObjectOfType<LevelManager>();
@@ -38,7 +40,7 @@ public class PlayerController : MonoBehaviour
         initialSpeed = navAgent.speed;
     }
 
-    void Update()
+    private void Update()
     {
         var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
@@ -108,5 +110,37 @@ public class PlayerController : MonoBehaviour
                 navAgent.speed = initialSpeed * carryingSpeedReduction;
             }
         }
+    }
+
+    private void OnTriggerEnter(Collider col)
+    {
+        Debug.Log(col.gameObject.tag);
+        if (col.gameObject.CompareTag(Constants.TagNames.Enemy))
+        {
+            // Cuando un enemigo colisiona con el jugador, este pierde una vida.
+            Physics.IgnoreCollision(col, GetComponent<Collider>());
+            PlayerDeath();
+        }
+        else if (col.gameObject.CompareTag(Constants.TagNames.Rock))
+        {
+            // Cuando el jugador colisiona con una piedra (único tipo de arma que utilizan
+            // los enemigos), entonces verificamos el ownership del proyectil para asegurarnos
+            // que fue arrojado por un enemigo.
+            var projectileCtrl = col.gameObject.GetComponent<ProjectileController>();
+            if (projectileCtrl?.owner.CompareTag(Constants.TagNames.Enemy) == true)
+            {
+                Destroy(col.gameObject);
+                PlayerDeath();
+            }
+        }
+    }
+
+    private void PlayerDeath()
+    {
+        if (playerLives > 0)
+            playerLives--;
+
+        Debug.Log($"Player Death! Lives: {playerLives}");
+        OnPlayerDeath?.Invoke(playerLives);
     }
 }

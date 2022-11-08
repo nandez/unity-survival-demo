@@ -17,18 +17,25 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float actionableDistance = 0.5f;
     [SerializeField] private Transform holdPoint;
 
+    [Header("Projectile Settings")]
+    [SerializeField] private int replenishSpearAmount = 3;
+    [SerializeField] private int replenishRockAmount = 10;
+    [SerializeField] private int currentSpears = 0;
+    [SerializeField] private int currentRocks = 0;
+
     [Header("Events")]
-    [Tooltip("Evento que se dispara cuando el jugador posiciona el mouse sobre un item accionable.")]
     public UnityEvent<string> OnMouseOverActionableItem;
-    [Tooltip("Evento que se dispara cuando el jugador pierde una vida.")]
     public UnityEvent<int> OnPlayerDeath;
+    public UnityEvent<int, int> OnAmmoReplenished;
 
-    public GameObject CurrentItem { get; private set; }
-
+    // Referencias..
     private LevelManager levelMgr;
     private NavMeshAgent navAgent;
+
+    private GameObject currentItem;
     private float initialSpeed;
     private int playerLives = 3;
+
 
     private void Start()
     {
@@ -38,6 +45,9 @@ public class PlayerController : MonoBehaviour
 
         // Guardamos la velocidad inicial del jugador..
         initialSpeed = navAgent.speed;
+
+        // Invocamos el evento para notificar la cantidad inicial de munición
+        OnAmmoReplenished?.Invoke(currentSpears, currentRocks);
     }
 
     private void Update()
@@ -78,15 +88,15 @@ public class PlayerController : MonoBehaviour
     private void ProcessItemActivation(string itemTag)
     {
 
-        if (itemTag.Equals(Constants.TagNames.Workbench) && CurrentItem != null)
+        if (itemTag.Equals(Constants.TagNames.Workbench) && currentItem != null)
         {
             // Como en este caso el jugador está activando el banco de trabajo y está cargando un
             // item, llamamos al método UpdateGameResource del LevelManager para que actualice la UI
             // y construya la parte de la casa correspondiente.
-            levelMgr.UpdateGameResource(CurrentItem.tag);
+            levelMgr.UpdateGameResource(currentItem.tag);
 
             // Limpiamos la variable para que se pueda volver a recolectar un recurso.
-            Destroy(CurrentItem);
+            Destroy(currentItem);
 
             // Restauramos la velocidad inicial del jugador..
             navAgent.speed = initialSpeed;
@@ -99,15 +109,28 @@ public class PlayerController : MonoBehaviour
             // Verificamos que efectivamente el item a activar matchea con GameResource y
             // si aún no hemos superado el máximo permitido. En tal caso, también verificamos
             // que el jugador no esté cargando un item ya.
-            if (resource?.CanAdd() != null && CurrentItem == null)
+            if (resource?.CanAdd() != null && currentItem == null)
             {
                 // Creamos el objeto a partir del prefab proporcionado y le seteamos el tag correspondiente.
-                CurrentItem = Instantiate(resource.ItemPrefab, holdPoint.position, Quaternion.identity);
-                CurrentItem.transform.SetParent(holdPoint);
-                CurrentItem.tag = itemTag;
+                currentItem = Instantiate(resource.ItemPrefab, holdPoint.position, Quaternion.identity);
+                currentItem.transform.SetParent(holdPoint);
+                currentItem.tag = itemTag;
 
                 // Reducimos la velocidad del jugador mientras lleva el item..
                 navAgent.speed = initialSpeed * carryingSpeedReduction;
+
+                // Si el item es una roca o madera, recargamos los proyectiles
+                // y emitimos el evento con los valores actuales.
+                if (currentItem.CompareTag(Constants.TagNames.Wood))
+                {
+                    currentSpears += replenishSpearAmount;
+                    OnAmmoReplenished?.Invoke(currentSpears, currentRocks);
+                }
+                else if (currentItem.CompareTag(Constants.TagNames.Stone))
+                {
+                    currentRocks += replenishRockAmount;
+                    OnAmmoReplenished?.Invoke(currentSpears, currentRocks);
+                }
             }
         }
     }

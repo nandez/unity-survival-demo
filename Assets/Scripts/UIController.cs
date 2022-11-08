@@ -8,13 +8,15 @@ public class UIController : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private List<GameObject> healthIcons;
+    [SerializeField] private Text spearsText;
+    [SerializeField] private Text rocksText;
 
     [Header("Timer Settings")]
     [SerializeField] private Text timeText;
     [SerializeField] private float timeRemaining = 10;
 
     [Header("Events")]
-    [Tooltip("Evento que se dispara cuando el timer expira.")]
+    //Evento que se dispara cuando el timer expira.
     public UnityEvent OnTimerExpired;
 
     private bool timerIsRunning = false;
@@ -56,6 +58,12 @@ public class UIController : MonoBehaviour
         // Desactivamos los iconos de vida.
         for (int i = healthIcons.Count; i > remainingLives; i--)
             healthIcons[i - 1].SetActive(false);
+    }
+
+    public void OnAmmoReplenished(int spearsCount, int rockCount)
+    {
+        spearsText.text = spearsCount.ToString();
+        rocksText.text = rockCount.ToString();
     }
 
     private void DisplayTime(float timeToDisplay)

@@ -27,8 +27,8 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private int maxEnemiesOnLevel = 10;
 
     [Header("Events")]
-    [Tooltip("Evento que se dispara cuando se actualizan los recursos del jugador.")]
     public UnityEvent<GameResource> OnGameResourcesUpdated;
+    public UnityEvent<int, int> OnAmmoUpdated;
 
     private GameState gameState = GameState.PAUSED;
     private List<GameObject> enemies = new List<GameObject>();
@@ -65,6 +65,8 @@ public class LevelManager : MonoBehaviour
         {
             buildPart = homes.FirstOrDefault(t => !t.activeInHierarchy);
             OnGameResourcesUpdated?.Invoke(wood);
+
+
         }
         else if (resourceTag.Equals(Constants.TagNames.Stone))
         {

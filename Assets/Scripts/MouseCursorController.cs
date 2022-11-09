@@ -11,31 +11,32 @@ public class MouseCursorController : MonoBehaviour
     [SerializeField] private Texture2D hammerCursorSprite;
 
 
-    public void OnMouseOverActionableItem(string itemTag)
+    public void OnMouseOverActionableItem(string actionableTag)
     {
-        if (itemTag?.Equals(Constants.TagNames.Wood) == true)
+        if (actionableTag?.Equals(Constants.TagNames.Wood) == true)
         {
             Cursor.SetCursor(axeCursorSprite, Vector2.zero, CursorMode.Auto);
         }
-        else if (itemTag?.Equals(Constants.TagNames.Ore) == true)
+        else if (actionableTag?.Equals(Constants.TagNames.Ore) == true)
         {
             Cursor.SetCursor(pickAxeCursorSprite, Vector2.zero, CursorMode.Auto);
         }
-        else if (itemTag?.Equals(Constants.TagNames.Stone) == true)
+        else if (actionableTag?.Equals(Constants.TagNames.Stone) == true)
         {
             Cursor.SetCursor(pickAxeCursorSprite, Vector2.zero, CursorMode.Auto);
         }
-        else if (itemTag?.Equals(Constants.TagNames.Workbench) == true)
+        else if (actionableTag?.Equals(Constants.TagNames.Workbench) == true)
         {
             Cursor.SetCursor(hammerCursorSprite, Vector2.zero, CursorMode.Auto);
+        }
+        else if (actionableTag?.Equals(Constants.TagNames.Enemy) == true)
+        {
+            Cursor.SetCursor(attackCursorSprite, Vector2.zero, CursorMode.Auto);
         }
         else
         {
             // Por defecto, reseteamos el cursor...
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
         }
-
-        // TODO: pendiente el cursor de ataque..
-        // Cursor.SetCursor(attackCursorSprite, Vector2.zero, CursorMode.Auto);
     }
 }

@@ -67,8 +67,9 @@ public class PlayerController : MonoBehaviour
         RaycastHit actionableHitInfo;
         if (Physics.Raycast(ray, out actionableHitInfo, clickableDistance, actionableLayer))
         {
+            Debug.Log(actionableHitInfo.collider.gameObject.tag);
             // Obtenemos el item accionable y disparamos el evento con el tag del objeto, para notificar
-            // a los listeners del evento "onTargetActionable" (ej: MouseCursorController)
+            // a los listeners del evento "OnMouseOverActionableItem" (ej: MouseCursorController)
             var target = actionableHitInfo.collider.gameObject;
             OnMouseOverActionableItem?.Invoke(target.tag);
 

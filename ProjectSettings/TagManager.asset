@@ -9,7 +9,7 @@ TagManager:
   - Resource_Stone
   - Actionable_Workbench
   - Actionable_Enemy
-  - Projectile_Rock
+  - Projectile
   - Projectile_Spear
   layers:
   - Default

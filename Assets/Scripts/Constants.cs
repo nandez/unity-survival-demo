@@ -12,7 +12,7 @@ public static class Constants
         public const string Ore = "Resource_Ore";
         public const string Workbench = "Actionable_Workbench";
         public const string Enemy = "Actionable_Enemy";
-        public const string Rock = "Projectile_Rock";
-        public const string Spear = "Projectile_Spear";
+        public const string Projectile = "Projectile";
+        //public const string Spear = "Projectile_Spear";
     }
 }

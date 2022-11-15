@@ -6,6 +6,8 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class EnemyController : MonoBehaviour
 {
+    [SerializeField] private float health;
+
     private PlayerController player;
 
     private NavMeshAgent navAgent;
@@ -30,6 +32,22 @@ public class EnemyController : MonoBehaviour
         {
             navAgent.SetDestination(transform.position);
             navAgent.isStopped = true;
+        }
+        else if (other.gameObject.CompareTag(Constants.TagNames.Projectile))
+        {
+            var projectile = other.gameObject.GetComponent<ProjectileController>();
+
+            // Cuando el enemigo es golpeado por un proyectil del jugador procesamos el daño..
+            if (projectile.owner == player.gameObject)
+            {
+                health -= projectile.GetDamage();
+
+                if (health <= 0)
+                    Destroy(gameObject);
+
+                // Destruimos el proyectil.
+                Destroy(other.gameObject);
+            }
         }
     }
 }

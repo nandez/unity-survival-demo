@@ -22,11 +22,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private int replenishRockAmount = 10;
     [SerializeField] private int currentSpears = 0;
     [SerializeField] private int currentRocks = 0;
+    [SerializeField] private float attackRange = 10f;
+    [SerializeField] private float attackCooldown = 3f;
+    [SerializeField] private GameObject rockPrefab;
+    [SerializeField] private GameObject spearPrefab;
+    [SerializeField] private Transform projectileSpawnPoint;
+
 
     [Header("Events")]
     public UnityEvent<string> OnMouseOverActionableItem;
     public UnityEvent<int> OnPlayerDeath;
-    public UnityEvent<int, int> OnAmmoReplenished;
+    public UnityEvent<int, int> OnAmmoChanged;
 
     // Referencias..
     private LevelManager levelMgr;
@@ -35,7 +41,8 @@ public class PlayerController : MonoBehaviour
     private GameObject currentItem;
     private float initialSpeed;
     private int playerLives = 3;
-
+    private GameObject targetEnemy;
+    private float attackTimer = 0f;
 
     private void Start()
     {
@@ -47,42 +54,82 @@ public class PlayerController : MonoBehaviour
         initialSpeed = navAgent.speed;
 
         // Invocamos el evento para notificar la cantidad inicial de munición
-        OnAmmoReplenished?.Invoke(currentSpears, currentRocks);
+        OnAmmoChanged?.Invoke(currentSpears, currentRocks);
     }
 
     private void Update()
     {
         var ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-        // Cuando el jugador hace click, verificamos si el rayo colisiona con la capa
-        // de navegación para setear el como destino en el navigation agent, la posición clickeada.
-        if (Input.GetMouseButtonDown(0))
-        {
-            RaycastHit groundHitInfo;
-            if (Physics.Raycast(ray, out groundHitInfo, clickableDistance, walkableLayer))
-                navAgent.SetDestination(groundHitInfo.point);
-        }
-
         // Verificamos si el mouse se encuentra posicionado sobre algun item accionable
         RaycastHit actionableHitInfo;
         if (Physics.Raycast(ray, out actionableHitInfo, clickableDistance, actionableLayer))
         {
-            Debug.Log(actionableHitInfo.collider.gameObject.tag);
             // Obtenemos el item accionable y disparamos el evento con el tag del objeto, para notificar
             // a los listeners del evento "OnMouseOverActionableItem" (ej: MouseCursorController)
             var target = actionableHitInfo.collider.gameObject;
             OnMouseOverActionableItem?.Invoke(target.tag);
 
-            // Verificamos la distancia al objeto para disparar la acción cuando el jugador presiona el mouse.
-            var distanceToItem = Vector3.Distance(transform.position, target.transform.position);
-            if (distanceToItem <= actionableDistance && Input.GetMouseButtonDown(0))
-                ProcessItemActivation(target.tag);
+            // Si el jugador hace click, verificamos si es un enemigo o un item accionable
+            if (Input.GetMouseButtonDown(0))
+            {
+                // Calculamos la distancia entre el item accionable y el jugador..
+                if (target.tag.Equals(Constants.TagNames.Enemy))
+                {
+                    // Como el item accionable es un enemigo, lo guardamos como objetivo.
+                    targetEnemy = target;
+                }
+                else
+                {
+                    // En este caso, limipiamos el objetivo actual dado que el jugador hizo click sobre otro
+                    // item accionable.
+                    targetEnemy = null;
+
+                    // Verificamos la distancia entre el item accionable y el jugador para procesar el item.
+                    if (Vector3.Distance(transform.position, target.transform.position) <= actionableDistance)
+                        ProcessItemActivation(target.tag);
+                }
+            }
         }
         else
         {
             // En este caso, disparamos el evento con null como parámetro para notificar a los listeners
             // del evento, el mouse no está posicionado sobre nada accionable...
             OnMouseOverActionableItem?.Invoke(null);
+
+            // Como no tenemos un objetivo fijado, verificamos si el jugador hace click sobre la capa navegable
+            // para movernos hacia la posición seleccionada.
+            if (Input.GetMouseButtonDown(0))
+            {
+                RaycastHit groundHitInfo;
+                if (Physics.Raycast(ray, out groundHitInfo, clickableDistance, walkableLayer))
+                {
+                    navAgent.SetDestination(groundHitInfo.point);
+                    targetEnemy = null;
+                }
+
+            }
+        }
+
+        if (targetEnemy != null)
+        {
+            var distanceToEnemy = Vector3.Distance(transform.position, targetEnemy.transform.position);
+            if (distanceToEnemy <= attackRange)
+            {
+                // Si el jugador está lo suficientemente cerca del enemigo, atacamos...
+                if (attackTimer <= 0)
+                    AttackEnemy();
+            }
+            else
+            {
+                // Si el jugador no está lo suficientemente cerca del enemigo, nos movemos hacia el...
+                navAgent.SetDestination(targetEnemy.transform.position);
+                navAgent.isStopped = false;
+            }
+        }
+        else
+        {
+            attackTimer -= Time.deltaTime;
         }
     }
 
@@ -125,12 +172,12 @@ public class PlayerController : MonoBehaviour
                 if (currentItem.CompareTag(Constants.TagNames.Wood))
                 {
                     currentSpears += replenishSpearAmount;
-                    OnAmmoReplenished?.Invoke(currentSpears, currentRocks);
+                    OnAmmoChanged?.Invoke(currentSpears, currentRocks);
                 }
                 else if (currentItem.CompareTag(Constants.TagNames.Stone))
                 {
                     currentRocks += replenishRockAmount;
-                    OnAmmoReplenished?.Invoke(currentSpears, currentRocks);
+                    OnAmmoChanged?.Invoke(currentSpears, currentRocks);
                 }
             }
         }
@@ -145,7 +192,7 @@ public class PlayerController : MonoBehaviour
             Physics.IgnoreCollision(col, GetComponent<Collider>());
             PlayerDeath();
         }
-        else if (col.gameObject.CompareTag(Constants.TagNames.Rock))
+        else if (col.gameObject.CompareTag(Constants.TagNames.Projectile))
         {
             // Cuando el jugador colisiona con una piedra (único tipo de arma que utilizan
             // los enemigos), entonces verificamos el ownership del proyectil para asegurarnos
@@ -167,4 +214,63 @@ public class PlayerController : MonoBehaviour
         Debug.Log($"Player Death! Lives: {playerLives}");
         OnPlayerDeath?.Invoke(playerLives);
     }
+
+    private void AttackEnemy()
+    {
+        // Miramos hacia el enemigo..
+        navAgent.transform.LookAt(new Vector3(targetEnemy.transform.position.x, navAgent.transform.position.y, targetEnemy.transform.position.z));
+
+        if (currentSpears > 0)
+        {
+            // Creamos el proyectil a partir del prefab y le seteamos el tag correspondiente.
+            var projectile = Instantiate(spearPrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
+            projectile.tag = Constants.TagNames.Projectile;
+
+            // Obtenemos el componente ProjectileController y seteamos el owner del proyectil.
+            var projectileCtrl = projectile.GetComponent<ProjectileController>();
+            projectileCtrl.owner = gameObject;
+            var dir = (targetEnemy.transform.position - transform.position).normalized;
+            projectileCtrl.Fire(dir);
+
+            // Restamos una lanza y emitimos el evento con los valores actuales.
+            currentSpears--;
+            OnAmmoChanged?.Invoke(currentSpears, currentRocks);
+
+            // Emitimos el evento para que el sonido se reproduzca.
+            //OnSpearThrown?.Invoke();
+        }
+        else if (currentRocks > 0)
+        {
+            // Creamos el proyectil a partir del prefab y le seteamos el tag correspondiente.
+            var projectile = Instantiate(rockPrefab, projectileSpawnPoint.position, projectileSpawnPoint.rotation);
+            projectile.tag = Constants.TagNames.Projectile;
+
+            // Obtenemos el componente ProjectileController y seteamos el owner del proyectil.
+            var projectileCtrl = projectile.GetComponent<ProjectileController>();
+            projectileCtrl.owner = gameObject;
+            var dir = (targetEnemy.transform.position - transform.position).normalized;
+            projectileCtrl.Fire(dir);
+
+            // Restamos una roca y emitimos el evento con los valores actuales.
+            currentRocks--;
+            OnAmmoChanged?.Invoke(currentSpears, currentRocks);
+
+            // Emitimos el evento para que el sonido se reproduzca.
+            //OnRockThrown?.Invoke();
+        }
+
+        attackTimer = attackCooldown;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.color = Color.green;
+
+        Gizmos.DrawWireSphere(transform.position, actionableDistance);
+        Gizmos.color = Color.red;
+    }
 }
+
+
+

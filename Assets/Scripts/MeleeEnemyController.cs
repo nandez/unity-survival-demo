@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class EnemyController : MonoBehaviour
+public class MeleeEnemyController : MonoBehaviour
 {
     [SerializeField] private float health;
 

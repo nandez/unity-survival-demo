@@ -127,10 +127,8 @@ public class PlayerController : MonoBehaviour
                 navAgent.isStopped = false;
             }
         }
-        else
-        {
-            attackTimer -= Time.deltaTime;
-        }
+
+        attackTimer -= Time.deltaTime;
     }
 
     private void ProcessItemActivation(string itemTag)

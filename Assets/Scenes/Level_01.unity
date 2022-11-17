@@ -1478,7 +1478,7 @@ MonoBehaviour:
   - {fileID: 1185410374}
   - {fileID: 1727082906}
   - {fileID: 661644511}
-  enemySpanDelay: 10
+  enemySpanDelay: 15
   maxEnemiesOnLevel: 10
   OnGameResourcesUpdated:
     m_PersistentCalls:

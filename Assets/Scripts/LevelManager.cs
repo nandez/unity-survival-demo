@@ -31,9 +31,6 @@ public class LevelManager : MonoBehaviour
     public UnityEvent<int, int> OnAmmoUpdated;
     public UnityEvent<GaveOverReason> OnGameOver;
 
-    private GameState gameState = GameState.PAUSED;
-    private List<GameObject> enemies = new List<GameObject>();
-
     private int buildingRemaining = 0;
 
     private void Start()
@@ -45,7 +42,6 @@ public class LevelManager : MonoBehaviour
         OnGameResourcesUpdated?.Invoke(stone);
         OnGameResourcesUpdated?.Invoke(ore);
 
-        gameState = GameState.RUNNING;
         StartCoroutine(nameof(SpawnEnemies));
 
         // Calculamos cuantas construcciones nos quedan por activar..
@@ -162,7 +158,12 @@ public class LevelManager : MonoBehaviour
         {
             yield return new WaitForSeconds(enemySpanDelay);
 
-            if (enemies.Count < maxEnemiesOnLevel)
+            // Calculamos cuantos enemigos tenemos en el nivel.
+            var enemyCount = FindObjectsOfType<RangedEnemyController>()?.Length ?? 0;
+            enemyCount += FindObjectsOfType<MeleeEnemyController>()?.Length ?? 0;
+
+            // Si no superamos el máximo permitido, instanciamos un nuevo enemigo.
+            if (enemyCount < maxEnemiesOnLevel)
             {
                 // Obtenemos un área de spawn aleatoria
                 var spawnArea = enemySpawnAreas[Random.Range(0, enemySpawnAreas.Count)].GetComponent<Collider>();
@@ -175,8 +176,7 @@ public class LevelManager : MonoBehaviour
                 var z = Random.Range(spawnArea.bounds.min.z, spawnArea.bounds.max.z);
 
                 // Instanciamos el enemigo en la posición del área de spawn
-                var enemy = Instantiate(enemyPrefab, new Vector3(x, 0.26f, z), Quaternion.identity);
-                enemies.Add(enemy);
+                Instantiate(enemyPrefab, new Vector3(x, 0.26f, z), Quaternion.identity);
             }
         }
     }

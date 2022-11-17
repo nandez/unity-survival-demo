@@ -21,7 +21,7 @@ public class CameraController : MonoBehaviour
         lastPlayerPos = player.transform.position;
     }
 
-    void FixedUpdate()
+    void LateUpdate()
     {
         lastPlayerPos = player.transform.position;
         Vector3 smoothMovement = Vector3.SmoothDamp(transform.position, lastPlayerPos - Vector3.back * -followDist, ref moveCurrentVelocity, moveSmoothTime);

@@ -12,6 +12,7 @@ public class UIController : MonoBehaviour
     [SerializeField] private Text spearsText;
     [SerializeField] private Text rocksText;
     [SerializeField] private GameObject pauseMenu;
+    [SerializeField] private GameObject messageMenu;
 
     [Header("Timer Settings")]
     [SerializeField] private Text timeText;
@@ -88,6 +89,29 @@ public class UIController : MonoBehaviour
     public void OnBackToMainMenuHandler()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void OnGameOverHandler(GaveOverReason reason)
+    {
+        Time.timeScale = 0;
+
+        switch (reason)
+        {
+            case GaveOverReason.LEVEL_COMPLETED:
+                messageMenu.GetComponentInChildren<TMPro.TMP_Text>().text = "Level Completed!";
+                break;
+            case GaveOverReason.OUT_OF_TIME:
+                messageMenu.GetComponentInChildren<TMPro.TMP_Text>().text = "Out of Time!";
+                break;
+            case GaveOverReason.PLAYER_DIED:
+                messageMenu.GetComponentInChildren<TMPro.TMP_Text>().text = "Game Over!";
+                break;
+            default:
+                messageMenu.GetComponentInChildren<TMPro.TMP_Text>().text = "Unknown Message!";
+                break;
+        }
+
+        messageMenu.SetActive(true);
     }
 
     private void DisplayTime(float timeToDisplay)

@@ -29,9 +29,12 @@ public class LevelManager : MonoBehaviour
     [Header("Events")]
     public UnityEvent<GameResource> OnGameResourcesUpdated;
     public UnityEvent<int, int> OnAmmoUpdated;
+    public UnityEvent<GaveOverReason> OnGameOver;
 
     private GameState gameState = GameState.PAUSED;
     private List<GameObject> enemies = new List<GameObject>();
+
+    private int buildingRemaining = 0;
 
     private void Start()
     {
@@ -44,6 +47,9 @@ public class LevelManager : MonoBehaviour
 
         gameState = GameState.RUNNING;
         StartCoroutine(nameof(SpawnEnemies));
+
+        // Calculamos cuantas construcciones nos quedan por activar..
+        buildingRemaining = homes.Count + fences.Count + pathways.Count;
     }
 
     private void UpdateNavMesh()
@@ -64,27 +70,55 @@ public class LevelManager : MonoBehaviour
         if (resourceTag.Equals(Constants.TagNames.Wood))
         {
             buildPart = homes.FirstOrDefault(t => !t.activeInHierarchy);
-            OnGameResourcesUpdated?.Invoke(wood);
 
+            if (buildPart != null)
+            {
+                // Para evitar que las partes de las casas se activen en simultáneo, a medida que vamos activando
+                // las etapas, vamos eliminando las etapas anteriores. Por lo que buscamos el índice de la parte a
+                // construir en la lista de partes de la casa y eliminamos las anteriores.
+                var buildPartIndex = homes.IndexOf(buildPart);
 
+                // Si el índice es mayor a 0, significa que la parte que vamos a construir no es la primera
+                // por lo que podemos eliminar el item anterior.
+                if (buildPartIndex > 0)
+                {
+                    // Quitamos la referencia del objeto de la lista y destruimos el game object.
+                    var previousBuildPart = homes[buildPartIndex - 1];
+                    homes.Remove(previousBuildPart);
+                    Destroy(previousBuildPart);
+                }
+            }
+
+            if (wood.Add())
+                OnGameResourcesUpdated?.Invoke(wood);
         }
         else if (resourceTag.Equals(Constants.TagNames.Stone))
         {
             buildPart = pathways.FirstOrDefault(t => !t.activeInHierarchy);
-            OnGameResourcesUpdated?.Invoke(stone);
+
+            if (stone.Add())
+                OnGameResourcesUpdated?.Invoke(stone);
         }
         else if (resourceTag.Equals(Constants.TagNames.Ore))
         {
             buildPart = fences.FirstOrDefault(t => !t.activeInHierarchy);
-            OnGameResourcesUpdated?.Invoke(ore);
+
+            if (ore.Add())
+                OnGameResourcesUpdated?.Invoke(ore);
         }
 
+        // En caso de haber construido alguna parte, actualizamos la malla de navegación.
         if (buildPart != null)
         {
-            // Activamos el game object y actualizamos la malla de navegación.
-            buildPart?.SetActive(true);
+            buildPart.SetActive(true);
+            buildingRemaining--;
+
             UpdateNavMesh();
         }
+
+        // Si activamos todas las partes de la construcción, el nivel se ha completado.
+        if (buildingRemaining == 0)
+            OnGameOver?.Invoke(GaveOverReason.LEVEL_COMPLETED);
     }
 
     /// <summary>
@@ -107,7 +141,7 @@ public class LevelManager : MonoBehaviour
 
     public void OnTimerExpiredHandler()
     {
-        Debug.Log("TIMER EXPIRED!");
+        OnGameOver?.Invoke(GaveOverReason.OUT_OF_TIME);
     }
 
     public void OnPlayerDeathHandler(int remainingLives)
@@ -115,6 +149,10 @@ public class LevelManager : MonoBehaviour
         if (remainingLives > 0)
         {
             // TODO: eliminar los enemigos
+        }
+        else
+        {
+            OnGameOver?.Invoke(GaveOverReason.PLAYER_DIED);
         }
     }
 

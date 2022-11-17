@@ -15,6 +15,17 @@ public class GameResource
         return amount < maxAmount;
     }
 
+    public bool Add()
+    {
+        if (CanAdd())
+        {
+            amount++;
+            return true;
+        }
+
+        return false;
+    }
+
     public int GetCurrentAmount()
     {
         return amount;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 public class UIController : MonoBehaviour
 {
@@ -10,6 +11,7 @@ public class UIController : MonoBehaviour
     [SerializeField] private List<GameObject> healthIcons;
     [SerializeField] private Text spearsText;
     [SerializeField] private Text rocksText;
+    [SerializeField] private GameObject pauseMenu;
 
     [Header("Timer Settings")]
     [SerializeField] private Text timeText;
@@ -23,6 +25,7 @@ public class UIController : MonoBehaviour
 
     void Start()
     {
+        Time.timeScale = 1;
         timerIsRunning = true;
     }
 
@@ -42,6 +45,14 @@ public class UIController : MonoBehaviour
                 timerIsRunning = false;
                 OnTimerExpired?.Invoke();
             }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            // Cuando el jugador pulsa la tecla escape, activamos / ocultamos el menu de pausa
+            // y seteamos el estado del juego en pausa / ejecucion utilizando la escala de tiempo.
+            pauseMenu.SetActive(!pauseMenu.activeSelf);
+            Time.timeScale = pauseMenu.activeSelf ? 0 : 1;
         }
     }
 
@@ -64,6 +75,19 @@ public class UIController : MonoBehaviour
     {
         spearsText.text = spearsCount.ToString();
         rocksText.text = rockCount.ToString();
+    }
+
+    public void OnResumeGameHandler()
+    {
+        // Cuando el jugador pulsa el boton de reanudar, ocultamos el menu de pausa
+        // y seteamos el estado del juego en ejecucion utilizando la escala de tiempo.
+        pauseMenu.SetActive(false);
+        Time.timeScale = 1;
+    }
+
+    public void OnBackToMainMenuHandler()
+    {
+        SceneManager.LoadScene("MainMenu");
     }
 
     private void DisplayTime(float timeToDisplay)

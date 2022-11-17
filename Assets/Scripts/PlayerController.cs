@@ -14,7 +14,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Actionable Items Settings")]
     [SerializeField] private LayerMask actionableLayer;
-    [SerializeField] private float actionableDistance = 0.5f;
+    [SerializeField] private float actionableDistance = 1f;
     [SerializeField] private Transform holdPoint;
 
     [Header("Projectile Settings")]
